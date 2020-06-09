@@ -39,8 +39,6 @@ LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LP
 
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLine, int ncmdShow) {
-	Running = true;
-
 	WNDCLASS WindowClass = {};
 
 	WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
@@ -57,6 +55,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 		);
 		if (WindowHandle) {
 			MSG Message;
+			Running = true;
 			while(Running) {
 				BOOL MessageResult = GetMessage(&Message, 0, 0, 0);	
 				if (MessageResult > 0) {
