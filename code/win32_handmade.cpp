@@ -14,7 +14,9 @@ global_variable HDC BitmapDeviceContext;
 internal void Win32ResizeDIBSection(int width, int height) {
 	if (BitmapHandle) {
 		DeleteObject(BitmapHandle);
-	} else {
+	}
+	
+	if (BitmapDeviceContext) {
 		BitmapDeviceContext = CreateCompatibleDC(0);
 	}
 
