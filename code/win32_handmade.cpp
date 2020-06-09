@@ -8,7 +8,12 @@
 global_variable bool Running;
 
 
-LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam) {
+internal void Win32ResizeDIBSection(int width, int height) {
+
+}
+
+
+LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam) {
 	LRESULT result = 0;
 	switch(Message) {
 		case WM_SIZE: {
@@ -47,7 +52,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 	WNDCLASS WindowClass = {};
 
 	WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
-	WindowClass.lpfnWndProc = MainWindowCallback;
+	WindowClass.lpfnWndProc = Win32MainWindowCallback;
 	WindowClass.hInstance = hInstance;
 	WindowClass.lpszClassName = "HandmadeHeroWindowClass";
 
