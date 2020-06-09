@@ -12,6 +12,7 @@ LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LP
 		} break;
 		case WM_CLOSE: {
 			OutputDebugStringA("WM_CLOSE\n");
+			PostQuitMessage(0);
 		} break;
 		case WM_ACTIVATEAPP: {
 			OutputDebugStringA("WM_ACTIVATEAPP\n");
@@ -43,19 +44,11 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 	WindowClass.lpszClassName = "HandmadeHeroWindowClass";
 
 	if (RegisterClass(&WindowClass)) {
-		HWND WindowHandle = CreateWindowEx(
-			0,
-			WindowClass.lpszClassName,
-			"Handmade Hero",
+		HWND WindowHandle = CreateWindowEx(0, WindowClass.lpszClassName, "Handmade Hero",
 			WS_OVERLAPPEDWINDOW|WS_VISIBLE,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			0,
-			0,
-			hInstance,
-			0
+			CW_USEDEFAULT,CW_USEDEFAULT,
+			CW_USEDEFAULT,CW_USEDEFAULT,
+			0, 0, hInstance, 0
 		);
 		if (WindowHandle) {
 			MSG Message;
