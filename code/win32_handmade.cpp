@@ -1,6 +1,11 @@
 #include <windows.h>
 
-static bool Running;
+#define internal static;
+#define local_persist static;
+#define global_variable static;
+
+
+global_variable bool Running;
 
 
 LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam) {
