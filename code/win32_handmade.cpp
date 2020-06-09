@@ -1,5 +1,7 @@
 #include <windows.h>
 
+static bool Running;
+
 
 LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam) {
 	LRESULT result = 0;
@@ -9,10 +11,11 @@ LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LP
 		} break;
 		case WM_DESTROY: {
 			OutputDebugStringA("WM_DESTROY\n");
+			Running = false;
 		} break;
 		case WM_CLOSE: {
 			OutputDebugStringA("WM_CLOSE\n");
-			PostQuitMessage(0);
+			Running = false;
 		} break;
 		case WM_ACTIVATEAPP: {
 			OutputDebugStringA("WM_ACTIVATEAPP\n");
@@ -36,6 +39,8 @@ LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LP
 
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLine, int ncmdShow) {
+	Running = true;
+
 	WNDCLASS WindowClass = {};
 
 	WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
@@ -52,7 +57,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 		);
 		if (WindowHandle) {
 			MSG Message;
-			for (;;) {
+			while(Running) {
 				BOOL MessageResult = GetMessage(&Message, 0, 0, 0);	
 				if (MessageResult > 0) {
 					TranslateMessage(&Message);
@@ -61,8 +66,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					break;
 				}
 			}
-			
-
 		}
 	} else {
 
