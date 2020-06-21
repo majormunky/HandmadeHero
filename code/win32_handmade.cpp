@@ -14,7 +14,6 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
-
 global_variable bool Running;
 global_variable BITMAPINFO BitmapInfo;
 global_variable void *BitmapMemory;
@@ -40,6 +39,26 @@ internal void Win32ResizeDIBSection(int width, int height) {
 	int BytesPerPixel = 4;
 	int BitmapMemorySize = BytesPerPixel * (BitmapWidth * BitmapHeight);
 	BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
+
+	int Pitch = BitmapWidth * BytesPerPixel;
+	uint8 *Row = (uint8 *)BitmapMemory;
+	for (int Y = 0; Y < BitmapHeight; ++Y) {
+		uint8 *Pixel = (uint8 *)Row;
+		for (int X = 0; X < BitmapWidth; ++X) {
+			*Pixel = 0;
+			++Pixel;
+
+			*Pixel = 0;
+			++Pixel;
+
+			*Pixel = 255;
+			++Pixel;
+
+			*Pixel = 0;
+			++Pixel;
+		}
+		Row += Pitch;
+	}
 }
 
 internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int x, int y, int width, int height) {
@@ -49,7 +68,7 @@ internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int x, int 
 		DeviceContext,
 		0, 0, BitmapWidth, BitmapHeight,
 		0, 0, WindowWidth, WindowHeight,
-		0, 0, DIB_RGB_COLORS, SRCCOPY
+		BitmapMemory, &BitmapInfo, DIB_RGB_COLORS, SRCCOPY
 	);
 }
 
