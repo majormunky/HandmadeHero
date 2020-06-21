@@ -8,6 +8,8 @@
 global_variable bool Running;
 global_variable BITMAPINFO BitmapInfo;
 global_variable void *BitmapMemory;
+global_variable int BitmapWidth;
+global_variable int BitmapHeight;
 
 internal void Win32ResizeDIBSection(int width, int height) {
 
@@ -15,24 +17,28 @@ internal void Win32ResizeDIBSection(int width, int height) {
 		VirtualFree(BitmapMemory, 0, MEM_RELEASE);
 	}
 
+	BitmapWidth = width;
+	BitmapHeight = height;
+
 	BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
-	BitmapInfo.bmiHeader.biWidth = width;
-	BitmapInfo.bmiHeader.biHeight = height;
+	BitmapInfo.bmiHeader.biWidth = BitmapWidth;
+	BitmapInfo.bmiHeader.biHeight = BitmapHeight;
 	BitmapInfo.bmiHeader.biPlanes = 1;
 	BitmapInfo.bmiHeader.biBitCount = 32;
 	BitmapInfo.bmiHeader.biCompression = BI_RGB;
 
 	int BytesPerPixel = 4;
-	int BitmapMemorySize = BytesPerPixel * (width * height);
+	int BitmapMemorySize = BytesPerPixel * (BitmapWidth * BitmapHeight);
 	BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
 }
 
-internal void Win32UpdateWindow(HDC DeviceContext, int x, int y, int width, int height) {
-
+internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int x, int y, int width, int height) {
+	int WindowWidth = WindowRect->right - WindowRect->left;
+	int WindowHeight = WindowRect->bottom - WindowRect->top;
 	StretchDIBits(
 		DeviceContext,
-		x, y, width, height,
-		x, y, width, height,
+		0, 0, BitmapWidth, BitmapHeight,
+		0, 0, WindowWidth, WindowHeight,
 		0, 0, DIB_RGB_COLORS, SRCCOPY
 	);
 }
@@ -61,13 +67,16 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			OutputDebugStringA("WM_ACTIVATEAPP\n");
 		} break;
 		case WM_PAINT: {
+			RECT ClientRect;
+			GetClientRect(Window, &ClientRect);
+
 			PAINTSTRUCT Paint;
 			HDC DeviceContext = BeginPaint(Window, &Paint);
 			int x = Paint.rcPaint.left;
 			int y = Paint.rcPaint.top;
 			int height = Paint.rcPaint.bottom - Paint.rcPaint.top;
 			int width = Paint.rcPaint.right - Paint.rcPaint.left;
-			Win32UpdateWindow(DeviceContext, x, y, width, height);
+			Win32UpdateWindow(DeviceContext, &ClientRect, x, y, width, height);
 			EndPaint(Window, &Paint);
 		} break;
 		default: {
