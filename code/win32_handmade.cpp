@@ -19,7 +19,7 @@ global_variable BITMAPINFO BitmapInfo;
 global_variable void *BitmapMemory;
 global_variable int BitmapWidth;
 global_variable int BitmapHeight;
-global_variable int BytesPerPixel;
+global_variable int BytesPerPixel = 4;
 
 
 internal void Win32DrawGradient(int xOffset, int yOffset) {
@@ -64,7 +64,6 @@ internal void Win32ResizeDIBSection(int width, int height) {
 	BitmapInfo.bmiHeader.biBitCount = 32;
 	BitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-	BytesPerPixel = 4;
 	int BitmapMemorySize = BytesPerPixel * (BitmapWidth * BitmapHeight);
 	BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
 
