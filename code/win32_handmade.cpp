@@ -26,22 +26,13 @@ internal void Win32DrawGradient(int xOffset, int yOffset) {
 	int Pitch = BitmapWidth * BytesPerPixel;
 	uint8 *Row = (uint8 *)BitmapMemory;
 	for (int Y = 0; Y < BitmapHeight; ++Y) {
-		uint8 *Pixel = (uint8 *)Row;
+		uint32 *Pixel = (uint32 *)Row;
 		for (int X = 0; X < BitmapWidth; ++X) {
-			// blue
-			*Pixel = (uint8)(X + xOffset);
-			++Pixel;
+			uint8 blue = X + xOffset;
+			uint8 green = Y + yOffset;
+			uint8 red = 0;
 
-			// green
-			*Pixel = (uint8)(Y + yOffset);
-			++Pixel;
-
-			// red
-			*Pixel = 0;
-			++Pixel;
-
-			*Pixel = 0;
-			++Pixel;
+			*Pixel++ = ((green << 8) | blue);
 		}
 		Row += Pitch;
 	}
