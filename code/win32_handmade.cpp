@@ -19,6 +19,34 @@ global_variable BITMAPINFO BitmapInfo;
 global_variable void *BitmapMemory;
 global_variable int BitmapWidth;
 global_variable int BitmapHeight;
+global_variable int BytesPerPixel;
+
+
+internal void Win32DrawGradient(int xOffset, int yOffset) {
+	int Pitch = BitmapWidth * BytesPerPixel;
+	uint8 *Row = (uint8 *)BitmapMemory;
+	for (int Y = 0; Y < BitmapHeight; ++Y) {
+		uint8 *Pixel = (uint8 *)Row;
+		for (int X = 0; X < BitmapWidth; ++X) {
+			// blue
+			*Pixel = (uint8)(X + xOffset);
+			++Pixel;
+
+			// green
+			*Pixel = (uint8)(Y + yOffset);
+			++Pixel;
+
+			// red
+			*Pixel = 0;
+			++Pixel;
+
+			*Pixel = 0;
+			++Pixel;
+		}
+		Row += Pitch;
+	}
+}
+
 
 internal void Win32ResizeDIBSection(int width, int height) {
 
@@ -36,29 +64,11 @@ internal void Win32ResizeDIBSection(int width, int height) {
 	BitmapInfo.bmiHeader.biBitCount = 32;
 	BitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-	int BytesPerPixel = 4;
+	BytesPerPixel = 4;
 	int BitmapMemorySize = BytesPerPixel * (BitmapWidth * BitmapHeight);
 	BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
 
-	int Pitch = BitmapWidth * BytesPerPixel;
-	uint8 *Row = (uint8 *)BitmapMemory;
-	for (int Y = 0; Y < BitmapHeight; ++Y) {
-		uint8 *Pixel = (uint8 *)Row;
-		for (int X = 0; X < BitmapWidth; ++X) {
-			*Pixel = 0;
-			++Pixel;
-
-			*Pixel = 0;
-			++Pixel;
-
-			*Pixel = 255;
-			++Pixel;
-
-			*Pixel = 0;
-			++Pixel;
-		}
-		Row += Pitch;
-	}
+	Win32DrawGradient(0, 0);
 }
 
 internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int x, int y, int width, int height) {
