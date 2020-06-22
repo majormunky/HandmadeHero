@@ -66,13 +66,11 @@ internal void Win32ResizeDIBSection(int width, int height) {
 
 	int BitmapMemorySize = BytesPerPixel * (BitmapWidth * BitmapHeight);
 	BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
-
-	Win32DrawGradient(0, 0);
 }
 
-internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int x, int y, int width, int height) {
-	int WindowWidth = WindowRect->right - WindowRect->left;
-	int WindowHeight = WindowRect->bottom - WindowRect->top;
+internal void Win32UpdateWindow(HDC DeviceContext, RECT *ClientRect, int x, int y, int width, int height) {
+	int WindowWidth = ClientRect->right - ClientRect->left;
+	int WindowHeight = ClientRect->bottom - ClientRect->top;
 	StretchDIBits(
 		DeviceContext,
 		0, 0, BitmapWidth, BitmapHeight,
@@ -144,6 +142,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 			MSG Message;
 			Running = true;
 			while(Running) {
+				int xOffset = 0;
+				int yOffset = 0;
 				while(PeekMessage(&Message, 0, 0, 0, PM_REMOVE)) {
 					if (Message.message == WM_QUIT) {
 						Running = false;	
@@ -151,6 +151,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					TranslateMessage(&Message);
 					DispatchMessage(&Message);	
 				}
+				Win32DrawGradient(xOffset, yOffset);
+				HDC DeviceContext = GetDC(WindowHandle);
+				RECT ClientRect;
+				GetClientRect(WindowHandle, &ClientRect);
+				int WindowWidth = ClientRect.right - ClientRect.left;
+				int WindowHeight = ClientRect.bottom - ClientRect.top;
+
+				Win32UpdateWindow(DeviceContext, &ClientRect, 0, 0, WindowWidth, WindowHeight);
+				xOffset++;
+				ReleaseDC(WindowHandle, DeviceContext);
 			}
 		}
 	} else {
