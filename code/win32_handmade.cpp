@@ -141,9 +141,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 		if (WindowHandle) {
 			MSG Message;
 			Running = true;
+			int xOffset = 0;
+			int yOffset = 0;
 			while(Running) {
-				int xOffset = 0;
-				int yOffset = 0;
 				while(PeekMessage(&Message, 0, 0, 0, PM_REMOVE)) {
 					if (Message.message == WM_QUIT) {
 						Running = false;	
