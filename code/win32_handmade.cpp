@@ -128,6 +128,43 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			OutputDebugStringA("WM_DESTROY\n");
 			Running = false;
 		} break;
+		case WM_SYSKEYDOWN: 
+		case WM_SYSKEYUP:
+		case WM_KEYDOWN:
+		case WM_KEYUP: {
+			uint32 VKCode = WParam;
+			bool WasDown = ((LParam & (1 << 30)) != 0);
+			bool IsDown = ((LParam & (1 << 31)) == 0);
+
+			if (WasDown != IsDown)  {
+				if (VKCode == 'W') { // W
+
+				} else if (VKCode == 'A') { // A
+
+				} else if (VKCode == 'S') { // S
+
+				} else if (VKCode == 'D') { // D
+
+				} else if (VKCode == 'Q') { // Q
+
+				} else if (VKCode == 'E') { // E
+
+				} else if (VKCode == VK_UP) {
+
+				} else if (VKCode == VK_DOWN) {
+
+				} else if (VKCode == VK_LEFT) {
+
+				} else if (VKCode == VK_RIGHT) {
+
+				} else if (VKCode == VK_ESCAPE) {
+
+				} else if (VKCode == VK_SPACE) {
+
+				}	
+			}
+			
+		} break;
 		case WM_CLOSE: {
 			OutputDebugStringA("WM_CLOSE\n");
 			Running = false;
@@ -189,8 +226,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					DispatchMessage(&Message);	
 				}
 
-				bool BtnA;
-
 				// handle controller input
 				for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ++ControllerIndex) {
 					XINPUT_STATE ControllerState;
@@ -205,29 +240,26 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 						bool BtnBack = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
 						bool BtnLeftShoulder = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
 						bool BtnRightShoulder = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
-						BtnA = (Pad->wButtons & XINPUT_GAMEPAD_A);
+						bool BtnA = (Pad->wButtons & XINPUT_GAMEPAD_A);
 						bool BtnB = (Pad->wButtons & XINPUT_GAMEPAD_B);
 						bool BtnX = (Pad->wButtons & XINPUT_GAMEPAD_X);
 						bool BtnY = (Pad->wButtons & XINPUT_GAMEPAD_Y);
 						int16 StickX = Pad->sThumbLX;
 						int16 StickY = Pad->sThumbLY;
 
+
+						if (BtnA) {
+							yOffset++;
+						}
 					} else {
 						// no controller here
 					}
-
-
 				}
 
-				XInputSetState(0, &v);
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
-				
-				if (BtnA) {
-					yOffset++;
-				}
 
 				ReleaseDC(WindowHandle, DeviceContext);
 			}
