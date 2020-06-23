@@ -50,7 +50,7 @@ global_variable x_input_set_state *XInputSetState_ = XInputSetStateStub;
 #define XInputSetState XInputSetState_
 
 internal void Win32LoadXInput(void) {
-	HMODULE XInputLibrary = LoadLibrary("xinput1_3.dll");
+	HMODULE XInputLibrary = LoadLibraryA("xinput1_3.dll");
 	if (XInputLibrary) {
 		XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary, "XInputGetState");
 		XInputSetState = (x_input_set_state *)GetProcAddress(XInputLibrary, "XInputSetState");
@@ -69,18 +69,18 @@ internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 }
 
 
-internal void Win32DrawGradient(win32_offscreen_buffer Buffer, int xOffset, int yOffset) {
-	uint8 *Row = (uint8 *)Buffer.Memory;
-	for (int Y = 0; Y < Buffer.Height; ++Y) {
+internal void Win32DrawGradient(win32_offscreen_buffer *Buffer, int xOffset, int yOffset) {
+	uint8 *Row = (uint8 *)Buffer->Memory;
+	for (int Y = 0; Y < Buffer->Height; ++Y) {
 		uint32 *Pixel = (uint32 *)Row;
-		for (int X = 0; X < Buffer.Width; ++X) {
+		for (int X = 0; X < Buffer->Width; ++X) {
 			uint8 blue = X + xOffset;
 			uint8 green = Y + yOffset;
 			uint8 red = 0;
 
 			*Pixel++ = ((green << 8) | blue);
 		}
-		Row += Buffer.Pitch;
+		Row += Buffer->Pitch;
 	}
 }
 
@@ -106,12 +106,12 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int width, i
 	Buffer->Pitch = Buffer->Width * Buffer->BytesPerPixel;
 }
 
-internal void Win32DisplayBuffer(HDC DeviceContext, int WindowWidth, int WindowHeight, win32_offscreen_buffer Buffer, int x, int y, int width, int height) {
+internal void Win32DisplayBuffer(HDC DeviceContext, int WindowWidth, int WindowHeight, win32_offscreen_buffer *Buffer, int x, int y, int width, int height) {
 	StretchDIBits(
 		DeviceContext,
 		0, 0, WindowWidth, WindowHeight,
-		0, 0, Buffer.Width, Buffer.Height,
-		Buffer.Memory, &Buffer.Info, DIB_RGB_COLORS, SRCCOPY
+		0, 0, Buffer->Width, Buffer->Height,
+		Buffer->Memory, &Buffer->Info, DIB_RGB_COLORS, SRCCOPY
 	);
 }
 
@@ -181,7 +181,7 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			int y = Paint.rcPaint.top;
 			int height = Paint.rcPaint.bottom - Paint.rcPaint.top;
 			int width = Paint.rcPaint.right - Paint.rcPaint.left;
-			Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, x, y, width, height);
+			Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, &BackBuffer, x, y, width, height);
 			EndPaint(Window, &Paint);
 		} break;
 		default: {
@@ -256,9 +256,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					}
 				}
 
-				Win32DrawGradient(BackBuffer, xOffset, yOffset);
+				Win32DrawGradient(&BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
-				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
+				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, &BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
 
 				ReleaseDC(WindowHandle, DeviceContext);
