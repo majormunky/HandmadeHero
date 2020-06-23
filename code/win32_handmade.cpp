@@ -158,6 +158,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 
 				Win32DisplayBuffer(DeviceContext, ClientRect, BackBuffer, 0, 0, WindowWidth, WindowHeight);
 				xOffset++;
+				yOffset++;
 				ReleaseDC(WindowHandle, DeviceContext);
 			}
 		}
