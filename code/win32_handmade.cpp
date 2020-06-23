@@ -28,6 +28,21 @@ global_variable bool Running;
 global_variable win32_offscreen_buffer BackBuffer;
 
 
+struct win32_window_size {
+	int Width;
+	int Height;
+}
+
+internal win32_window_size GetWindowDimensions(HWND Window) {
+	win32_window_size result;
+	RECT ClientRect;
+	GetClientRect(Window, &ClientRect);
+	result.Width = ClientRect.right - ClientRect.left;
+	result.Height = ClientRect.bottom - ClientRect.top;
+	return(result);
+}
+
+
 internal void Win32DrawGradient(win32_offscreen_buffer Buffer, int xOffset, int yOffset) {
 	uint8 *Row = (uint8 *)Buffer.Memory;
 	for (int Y = 0; Y < Buffer.Height; ++Y) {
