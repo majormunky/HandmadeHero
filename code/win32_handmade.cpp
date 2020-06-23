@@ -22,16 +22,42 @@ struct win32_offscreen_buffer {
 	int Height;
 	int Pitch;
 	int BytesPerPixel;
-}
-
+};
 
 struct win32_window_size {
 	int Width;
 	int Height;
-}
+};
 
 global_variable bool Running;
 global_variable win32_offscreen_buffer BackBuffer;
+
+// buncha junk to deal with loading XInput
+#define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
+typedef X_INPUT_GET_STATE(x_input_get_state);
+X_INPUT_GET_STATE(XInputGetStateStub) {
+	return(0);
+}
+global_variable x_input_get_state *XInputGetState_ = XInputGetStateStub;
+#define XInputGetState XInputGetState_
+
+#define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
+typedef X_INPUT_SET_STATE(x_input_set_state);
+X_INPUT_SET_STATE(XInputSetStateStub) {
+	return(0);
+}
+global_variable x_input_set_state *XInputSetState_ = XInputSetStateStub;
+#define XInputSetState XInputSetState_
+
+internal void Win32LoadXInput(void) {
+	HMODULE XInputLibrary = LoadLibrary("xinput1_3.dll");
+	if (XInputLibrary) {
+		XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary, "XInputGetState");
+		XInputSetState = (x_input_set_state *)GetProcAddress(XInputLibrary, "XInputSetState");
+	}
+}
+
+// Done loading x input junk
 
 internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 	win32_window_size result;
@@ -130,6 +156,8 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLine, int ncmdShow) {
+	Win32LoadXInput();
+
 	WNDCLASS WindowClass = {};
 
 	Win32ResizeDIBSection(&BackBuffer, 1280, 720);
@@ -161,6 +189,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					DispatchMessage(&Message);	
 				}
 
+				bool BtnA;
+
 				// handle controller input
 				for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ++ControllerIndex) {
 					XINPUT_STATE ControllerState;
@@ -175,7 +205,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 						bool BtnBack = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
 						bool BtnLeftShoulder = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
 						bool BtnRightShoulder = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
-						bool BtnA = (Pad->wButtons & XINPUT_GAMEPAD_A);
+						BtnA = (Pad->wButtons & XINPUT_GAMEPAD_A);
 						bool BtnB = (Pad->wButtons & XINPUT_GAMEPAD_B);
 						bool BtnX = (Pad->wButtons & XINPUT_GAMEPAD_X);
 						bool BtnY = (Pad->wButtons & XINPUT_GAMEPAD_Y);
@@ -189,12 +219,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 
 				}
 
-
+				XInputSetState(0, &v);
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
-				yOffset++;
+				
+				if (BtnA) {
+					yOffset++;
+				}
+
 				ReleaseDC(WindowHandle, DeviceContext);
 			}
 		}
