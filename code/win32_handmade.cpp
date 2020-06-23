@@ -33,7 +33,7 @@ struct win32_window_size {
 	int Height;
 }
 
-internal win32_window_size GetWindowDimensions(HWND Window) {
+internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 	win32_window_size result;
 	RECT ClientRect;
 	GetClientRect(Window, &ClientRect);
@@ -94,7 +94,7 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 	LRESULT result = 0;
 	switch(Message) {
 		case WM_SIZE: {
-			win32_window_size WindowSize = GetWindowDimensions(Window);
+			win32_window_size WindowSize = Win32GetWindowDimensions(Window);
 			Win32ResizeDIBSection(&BackBuffer, WindowSize.Width, WindowSize.Height);
 			OutputDebugStringA("WM_SIZE\n");
 		} break;
@@ -110,7 +110,7 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			OutputDebugStringA("WM_ACTIVATEAPP\n");
 		} break;
 		case WM_PAINT: {
-			win32_window_size WindowSize = GetWindowDimensions(Window);
+			win32_window_size WindowSize = Win32GetWindowDimensions(Window);
 
 			PAINTSTRUCT Paint;
 			HDC DeviceContext = BeginPaint(Window, &Paint);
@@ -159,7 +159,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				}
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
-				win32_window_size WindowSize = GetWindowDimensions(WindowHandle);
+				win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
 
 
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
