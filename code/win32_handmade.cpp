@@ -2,10 +2,12 @@
 #include <stdint.h>
 #include <xinput.h>
 #include <dsound.h>
+#include <math.h>
 
 #define internal static;
 #define local_persist static;
 #define global_variable static;
+#define Pi32 3.14159265359f
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;
@@ -16,6 +18,8 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 typedef int32 bool32;
+typedef float real32;
+typedef double real64;
 
 struct win32_offscreen_buffer {
 	BITMAPINFO Info;
@@ -30,6 +34,16 @@ struct win32_window_size {
 	int Width;
 	int Height;
 };
+
+struct win32_sound_output {
+	int SamplesPerSecond;
+	int Hz;
+	uint32 RunningSampleIndex;
+	int BytesPerSample;
+	int WavePeriod;			
+	int BufferSize;
+	int16 ToneVolume;
+}
 
 global_variable bool Running;
 global_variable win32_offscreen_buffer BackBuffer;
@@ -119,7 +133,39 @@ internal void Win32LoadXInput(void) {
 	}
 }
 
-// Done loading x input junk
+internal void Win32FillSoundBuffer(win32_sound_output *SoundOutput, DWORD ByteToLock, DWORD BytesToWrite) {
+	VOID *Region1;
+	DWORD Region1Size;
+	VOID *Region2;
+	DWORD Region2Size;
+
+	if (SUCCEEDED(SecondarySoundBuffer->Lock(ByteToLock, BytesToWrite, &Region1, &Region1Size, &Region2, &Region2Size, 0))) {
+		int16 *SampleOut = (int16 *)Region1;
+		DWORD Region1SampleCount = Region1Size / SoundOutput->BytesPerSample;
+		for (DWORD SampleIndex = 0; SampleIndex < Region1SampleCount; ++SampleIndex) {
+			real32 t = 2.0f * Pi32 * (real32)SoundOutput->RunningSampleIndex / (real32)SoundOutput->WavePeriod;
+			real32 SineValue = sinf(t);
+			int16 SampleValue = (int16)(SineValue * SoundOutput->ToneVolume);
+			*SampleOut++ = SampleValue;
+			*SampleOut++ = SampleValue;
+			++SoundOutput->RunningSampleIndex;
+		}
+		
+		DWORD Region2SampleCount = Region2Size / SoundOutput->BytesPerSample;
+		SampleOut = (int16 *)Region2;
+		for (DWORD SampleIndex = 0; SampleIndex < Region2SampleCount; ++SampleIndex) {
+			real32 t = 2.0f * Pi32 * (real32)SoundOutput->RunningSampleIndex / (real32)SoundOutput->WavePeriod;
+			real32 SineValue = sinf(t);
+			int16 SampleValue = (int16)(SineValue * SoundOutput->ToneVolume);
+			*SampleOut++ = SampleValue;
+			*SampleOut++ = SampleValue;
+			++SoundOutput->RunningSampleIndex;
+		}
+
+		SecondarySoundBuffer->Unlock(Region1, Region1Size, Region2, Region2Size);
+	}
+}
+
 
 internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 	win32_window_size result;
@@ -285,17 +331,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 			int xOffset = 0;
 			int yOffset = 0;
 
-			// Sound stuff
-			int SamplesPerSecond = 48000;			
-			int ToneHz = 256;
-			uint32 RunningSampleIndex = 0;
-			int BytesPerSample = sizeof(int16) * 2;
-			int SquareWavePeriod = SamplesPerSecond / ToneHz;
-			int HalfSquareWavePeriod = SquareWavePeriod / 2;
-			int SecondarySoundBufferSize = SamplesPerSecond * BytesPerSample;
+			win32_sound_output SoundOutput = {};
+			SoundOutput.SamplesPerSecond = 48000;
+			SoundOutput.Hz = 256;
+			SoundOutput.ToneVolume = 3000;
+			SoundOutput.WavePeriod = SoundOutput.SamplesPerSecond / SoundOutput.Hz;
+			SoundOutput.BytesPerSample = sizeof(int16) * 2;
+			SoundOutput.BufferSize = SoundOutput.SamplesPerSecond * SoundOutput.BytesPerSample;
+			SoundOutput.RunningSampleIndex = 0;
 
-			Win32InitSound(WindowHandle, SamplesPerSecond, SecondarySoundBufferSize);
-			bool32 SoundIsPlaying = false;
+			Win32InitSound(WindowHandle, SoundOutput.SamplesPerSecond, SoundOutput.BufferSize);
+			Win32FillSoundBuffer(&SoundOutput, 0, SoundOutput.BufferSize);
+			SecondarySoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
 
 			win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
 			while(Running) {
@@ -341,50 +388,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				DWORD WriteCursor;
 
 				if (SUCCEEDED(SecondarySoundBuffer->GetCurrentPosition(&PlayCursor, &WriteCursor))) {
-					DWORD ByteToLock = RunningSampleIndex * BytesPerSample % SecondarySoundBufferSize;
+					DWORD ByteToLock = (SoundOutput.RunningSampleIndex * SoundOutput.BytesPerSample) % SoundOutput.BufferSize;
 					DWORD BytesToWrite;
 
 					if (ByteToLock == PlayCursor) {
-						BytesToWrite = SecondarySoundBufferSize;
+						BytesToWrite = 0;	
 					} else if (ByteToLock > PlayCursor) {
-						BytesToWrite = (SecondarySoundBufferSize - ByteToLock);
+						BytesToWrite = (SoundOutput.BufferSize - ByteToLock);
 						BytesToWrite += PlayCursor;
 					} else {
 						BytesToWrite = PlayCursor - ByteToLock;
 					}
-
-					VOID *Region1;
-					DWORD Region1Size;
-					VOID *Region2;
-					DWORD Region2Size;
-					int16 Volume = 8000;
-
-					if (SUCCEEDED(SecondarySoundBuffer->Lock(ByteToLock, BytesToWrite, &Region1, &Region1Size, &Region2, &Region2Size, 0))) {
-						int16 *SampleOut = (int16 *)Region1;
-						DWORD Region1SampleCount = Region1Size / BytesPerSample;
-						for (DWORD SampleIndex = 0; SampleIndex < Region1SampleCount; ++SampleIndex) {
-							int16 SampleValue = ((RunningSampleIndex / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
-							*SampleOut++ = SampleValue;
-							*SampleOut++ = SampleValue;
-							RunningSampleIndex++;
-						}
-						
-						DWORD Region2SampleCount = Region2Size / BytesPerSample;
-						SampleOut = (int16 *)Region2;
-						for (DWORD SampleIndex = 0; SampleIndex < Region2SampleCount; ++SampleIndex) {
-							int16 SampleValue = ((RunningSampleIndex / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
-							*SampleOut++ = SampleValue;
-							*SampleOut++ = SampleValue;
-							RunningSampleIndex++;
-						}
-
-						SecondarySoundBuffer->Unlock(Region1, Region1Size, Region2, Region2Size);
-					}
-				}
-
-				if (!SoundIsPlaying) {
-					SoundIsPlaying = true;
-					SecondarySoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
+					Win32FillSoundBuffer(&SoundOutput, ByteToLock, BytesToWrite);
 				}
 
 				HDC DeviceContext = GetDC(WindowHandle);
