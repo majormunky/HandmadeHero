@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdint.h>
+#include <xinput.h>
 
 #define internal static;
 #define local_persist static;
@@ -14,7 +15,6 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
-
 struct win32_offscreen_buffer {
 	BITMAPINFO Info;
 	void *Memory;
@@ -24,14 +24,14 @@ struct win32_offscreen_buffer {
 	int BytesPerPixel;
 }
 
-global_variable bool Running;
-global_variable win32_offscreen_buffer BackBuffer;
-
 
 struct win32_window_size {
 	int Width;
 	int Height;
 }
+
+global_variable bool Running;
+global_variable win32_offscreen_buffer BackBuffer;
 
 internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 	win32_window_size result;
@@ -160,6 +160,36 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					TranslateMessage(&Message);
 					DispatchMessage(&Message);	
 				}
+
+				// handle controller input
+				for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ++ControllerIndex) {
+					XINPUT_STATE ControllerState;
+					if (XInputGetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS) {
+						// tihs controller is plugged in
+						XINPUT_GAMEPAD *Pad = &ControllerState.Gamepad;
+						bool DPadUp = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+						bool DPadDown = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+						bool DPadLeft = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+						bool DPadRight = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+						bool BtnStart = (Pad->wButtons & XINPUT_GAMEPAD_START);
+						bool BtnBack = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
+						bool BtnLeftShoulder = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+						bool BtnRightShoulder = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+						bool BtnA = (Pad->wButtons & XINPUT_GAMEPAD_A);
+						bool BtnB = (Pad->wButtons & XINPUT_GAMEPAD_B);
+						bool BtnX = (Pad->wButtons & XINPUT_GAMEPAD_X);
+						bool BtnY = (Pad->wButtons & XINPUT_GAMEPAD_Y);
+						int16 StickX = Pad->sThumbLX;
+						int16 StickY = Pad->sThumbLY;
+
+					} else {
+						// no controller here
+					}
+
+
+				}
+
+
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
