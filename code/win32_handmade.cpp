@@ -14,6 +14,7 @@ typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
+typedef int32 bool32;
 
 struct win32_offscreen_buffer {
 	BITMAPINFO Info;
@@ -166,7 +167,11 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 
 				}	
 			}
-			
+
+			bool32 AltKeyWasDown = (LParam & (1 << 29));
+			if ((VKCode == VK_F4) && AltKeyWasDown) { 
+				Running = false;
+			}
 		} break;
 		case WM_CLOSE: {
 			OutputDebugStringA("WM_CLOSE\n");
