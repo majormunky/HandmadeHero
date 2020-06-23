@@ -295,7 +295,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 			int SecondarySoundBufferSize = SamplesPerSecond * BytesPerSample;
 
 			Win32InitSound(WindowHandle, SamplesPerSecond, SecondarySoundBufferSize);
-			SecondarySoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
+			bool32 SoundIsPlaying = false;
 
 			win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
 			while(Running) {
@@ -344,7 +344,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					DWORD ByteToLock = RunningSampleIndex * BytesPerSample % SecondarySoundBufferSize;
 					DWORD BytesToWrite;
 
-					if (ByteToLock > PlayCursor) {
+					if (ByteToLock == PlayCursor) {
+						BytesToWrite = SecondarySoundBufferSize;
+					} else if (ByteToLock > PlayCursor) {
 						BytesToWrite = (SecondarySoundBufferSize - ByteToLock);
 						BytesToWrite += PlayCursor;
 					} else {
@@ -361,19 +363,28 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 						int16 *SampleOut = (int16 *)Region1;
 						DWORD Region1SampleCount = Region1Size / BytesPerSample;
 						for (DWORD SampleIndex = 0; SampleIndex < Region1SampleCount; ++SampleIndex) {
-							int16 SampleValue = ((RunningSampleIndex++ / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
+							int16 SampleValue = ((RunningSampleIndex / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
 							*SampleOut++ = SampleValue;
 							*SampleOut++ = SampleValue;
+							RunningSampleIndex++;
 						}
 						
 						DWORD Region2SampleCount = Region2Size / BytesPerSample;
 						SampleOut = (int16 *)Region2;
 						for (DWORD SampleIndex = 0; SampleIndex < Region2SampleCount; ++SampleIndex) {
-							int16 SampleValue = ((RunningSampleIndex++ / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
+							int16 SampleValue = ((RunningSampleIndex / HalfSquareWavePeriod) % 2) ? Volume : -Volume;
 							*SampleOut++ = SampleValue;
 							*SampleOut++ = SampleValue;
-						}		
+							RunningSampleIndex++;
+						}
+
+						SecondarySoundBuffer->Unlock(Region1, Region1Size, Region2, Region2Size);
 					}
+				}
+
+				if (!SoundIsPlaying) {
+					SoundIsPlaying = true;
+					SecondarySoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
 				}
 
 				HDC DeviceContext = GetDC(WindowHandle);
