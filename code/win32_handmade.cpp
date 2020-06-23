@@ -83,8 +83,8 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int width, i
 internal void Win32DisplayBuffer(HDC DeviceContext, int WindowWidth, int WindowHeight, win32_offscreen_buffer Buffer, int x, int y, int width, int height) {
 	StretchDIBits(
 		DeviceContext,
-		0, 0, Buffer.Width, Buffer.Height,
 		0, 0, WindowWidth, WindowHeight,
+		0, 0, Buffer.Width, Buffer.Height,
 		Buffer.Memory, &Buffer.Info, DIB_RGB_COLORS, SRCCOPY
 	);
 }
