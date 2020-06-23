@@ -80,9 +80,7 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int width, i
 	Buffer->Pitch = Buffer->Width * Buffer->BytesPerPixel;
 }
 
-internal void Win32DisplayBuffer(HDC DeviceContext, RECT ClientRect, win32_offscreen_buffer Buffer, int x, int y, int width, int height) {
-	int WindowWidth = ClientRect.right - ClientRect.left;
-	int WindowHeight = ClientRect.bottom - ClientRect.top;
+internal void Win32DisplayBuffer(HDC DeviceContext, int WindowWidth, int WindowHeight, win32_offscreen_buffer Buffer, int x, int y, int width, int height) {
 	StretchDIBits(
 		DeviceContext,
 		0, 0, Buffer.Width, Buffer.Height,
@@ -96,11 +94,8 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 	LRESULT result = 0;
 	switch(Message) {
 		case WM_SIZE: {
-			RECT ClientRect;
-			GetClientRect(Window, &ClientRect);
-			int width = ClientRect.right - ClientRect.left;
-			int height = ClientRect.bottom - ClientRect.top;
-			Win32ResizeDIBSection(&BackBuffer, width, height);
+			win32_window_size WindowSize = GetWindowDimensions(Window);
+			Win32ResizeDIBSection(&BackBuffer, WindowSize.Width, WindowSize.Height);
 			OutputDebugStringA("WM_SIZE\n");
 		} break;
 		case WM_DESTROY: {
@@ -115,8 +110,7 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			OutputDebugStringA("WM_ACTIVATEAPP\n");
 		} break;
 		case WM_PAINT: {
-			RECT ClientRect;
-			GetClientRect(Window, &ClientRect);
+			win32_window_size WindowSize = GetWindowDimensions(Window);
 
 			PAINTSTRUCT Paint;
 			HDC DeviceContext = BeginPaint(Window, &Paint);
@@ -124,7 +118,7 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 			int y = Paint.rcPaint.top;
 			int height = Paint.rcPaint.bottom - Paint.rcPaint.top;
 			int width = Paint.rcPaint.right - Paint.rcPaint.left;
-			Win32DisplayBuffer(DeviceContext, ClientRect, BackBuffer, x, y, width, height);
+			Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, x, y, width, height);
 			EndPaint(Window, &Paint);
 		} break;
 		default: {
@@ -165,13 +159,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				}
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
-				RECT ClientRect;
-				GetClientRect(WindowHandle, &ClientRect);
-				int WindowWidth = ClientRect.right - ClientRect.left;
-				int WindowHeight = ClientRect.bottom - ClientRect.top;
+				win32_window_size WindowSize = GetWindowDimensions(WindowHandle);
 
 
-				Win32DisplayBuffer(DeviceContext, ClientRect, BackBuffer, 0, 0, WindowWidth, WindowHeight);
+				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
 				yOffset++;
 				ReleaseDC(WindowHandle, DeviceContext);
