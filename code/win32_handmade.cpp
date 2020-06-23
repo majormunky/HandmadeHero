@@ -132,6 +132,8 @@ LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM WPara
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLine, int ncmdShow) {
 	WNDCLASS WindowClass = {};
 
+	Win32ResizeDIBSection(&BackBuffer, 1280, 720);
+
 	WindowClass.style = CS_HREDRAW|CS_VREDRAW;
 	WindowClass.lpfnWndProc = Win32MainWindowCallback;
 	WindowClass.hInstance = hInstance;
@@ -149,6 +151,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 			Running = true;
 			int xOffset = 0;
 			int yOffset = 0;
+			win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
 			while(Running) {
 				while(PeekMessage(&Message, 0, 0, 0, PM_REMOVE)) {
 					if (Message.message == WM_QUIT) {
@@ -159,9 +162,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				}
 				Win32DrawGradient(BackBuffer, xOffset, yOffset);
 				HDC DeviceContext = GetDC(WindowHandle);
-				win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
-
-
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
 				yOffset++;
