@@ -16,6 +16,6 @@ internal void RenderGradient(game_offscreen_buffer *Buffer, int BlueOffset, int 
 }
 
 
-internal void GameUpdateAndRender(game_offscreen_buffer *Buffer) {
-	RenderGradient(Buffer, 0, 0);
+internal void GameUpdateAndRender(game_offscreen_buffer *Buffer, int xOffset, int yOffset) {
+	RenderGradient(Buffer, xOffset, yOffset);
 }

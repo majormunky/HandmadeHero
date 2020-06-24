@@ -181,22 +181,6 @@ internal win32_window_size Win32GetWindowDimensions(HWND Window) {
 }
 
 
-internal void Win32DrawGradient(win32_offscreen_buffer *Buffer, int xOffset, int yOffset) {
-	uint8 *Row = (uint8 *)Buffer->Memory;
-	for (int Y = 0; Y < Buffer->Height; ++Y) {
-		uint32 *Pixel = (uint32 *)Row;
-		for (int X = 0; X < Buffer->Width; ++X) {
-			uint8 blue = X + xOffset;
-			uint8 green = Y + yOffset;
-			uint8 red = 0;
-
-			*Pixel++ = ((green << 8) | blue);
-		}
-		Row += Buffer->Pitch;
-	}
-}
-
-
 internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int width, int height) {
 	if (Buffer->Memory) {
 		VirtualFree(Buffer->Memory, 0, MEM_RELEASE);
@@ -402,8 +386,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				Buffer.Height = BackBuffer.Height;
 				Buffer.Pitch = BackBuffer.Pitch;
 
-				GameUpdateAndRender(&Buffer);
-				Win32DrawGradient(&BackBuffer, xOffset, yOffset);
+				GameUpdateAndRender(&Buffer, xOffset, yOffset);
 				DWORD PlayCursor;
 				DWORD WriteCursor;
 
