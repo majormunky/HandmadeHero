@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <xinput.h>
 #include <dsound.h>
 #include <math.h>
@@ -320,6 +321,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 	QueryPerformanceFrequency(&PerfCountFrequencyResult);
 	int64 PerfCountFrequency = PerfCountFrequencyResult.QuadPart;
 
+	int64 LastCycleCount = __rdtsc();
+
 	if (RegisterClass(&WindowClass)) {
 		HWND WindowHandle = CreateWindowEx(0, WindowClass.lpszClassName, "Handmade Hero",
 			WS_OVERLAPPEDWINDOW|WS_VISIBLE,
@@ -417,14 +420,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				QueryPerformanceCounter(&EndCounter);
 
 				int64 CounterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
-				int32 MsPerFrame = (((1000 * CounterElapsed) / PerfCountFrequency));
-				int32 FPS = PerfCountFrequency / CounterElapsed;
-
-				char Buffer[256];
-				wsprintf(Buffer, "MS Per Frame: %d FPS: %d\n", MsPerFrame, FPS);
-				OutputDebugStringA(Buffer);
+				real32 MsPerFrame = (((1000.0f * (real32)CounterElapsed) / (real32)PerfCountFrequency));
+				real32 FPS = (real32)PerfCountFrequency / (real32)CounterElapsed;
 				
 				LastCounter = EndCounter;
+
+				int64 EndCycleCount = __rdtsc();
+				int64 CyclesElapsed = EndCycleCount - LastCycleCount;
+				LastCycleCount = EndCycleCount;
+				real32 MegaCyclesPerFrame = ((real32)CyclesElapsed / (1000.0f * 1000.0f));
+
+				char Buffer[256];
+				sprintf(Buffer, "MS Per Frame: %f FPS: %f Cycles: %f\n", MsPerFrame, FPS, MegaCyclesPerFrame);
+				OutputDebugStringA(Buffer);
 			}
 		}
 	} else {
