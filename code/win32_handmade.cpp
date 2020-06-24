@@ -316,6 +316,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 	WindowClass.hInstance = hInstance;
 	WindowClass.lpszClassName = "HandmadeHeroWindowClass";
 
+	LARGE_INTEGER PerfCountFrequencyResult;
+	QueryPerformanceFrequency(&PerfCountFrequencyResult);
+	int64 PerfCountFrequency = PerfCountFrequencyResult.QuadPart;
+
 	if (RegisterClass(&WindowClass)) {
 		HWND WindowHandle = CreateWindowEx(0, WindowClass.lpszClassName, "Handmade Hero",
 			WS_OVERLAPPEDWINDOW|WS_VISIBLE,
@@ -344,8 +348,11 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 			Win32FillSoundBuffer(&SoundOutput, 0, SoundOutput.BufferSize);
 			SecondarySoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
 
+			LARGE_INTEGER LastCounter;
+			QueryPerformanceCounter(&LastCounter);
+
 			win32_window_size WindowSize = Win32GetWindowDimensions(WindowHandle);
-			while(Running) {
+			while(Running) {				
 				while(PeekMessage(&Message, 0, 0, 0, PM_REMOVE)) {
 					if (Message.message == WM_QUIT) {
 						Running = false;	
@@ -406,7 +413,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				Win32DisplayBuffer(DeviceContext, WindowSize.Width, WindowSize.Height, &BackBuffer, 0, 0, WindowSize.Width, WindowSize.Height);
 				xOffset++;
 
-				ReleaseDC(WindowHandle, DeviceContext);
+				LARGE_INTEGER EndCounter;
+				QueryPerformanceCounter(&EndCounter);
+
+				int64 CounterElapsed = EndCounter.QuadPart - LastCounter.QuadPart;
+				int32 MsPerFrame = (((1000 * CounterElapsed) / PerfCountFrequency));
+				int32 FPS = PerfCountFrequency / CounterElapsed;
+
+				char Buffer[256];
+				wsprintf(Buffer, "MS Per Frame: %d FPS: %d\n", MsPerFrame, FPS);
+				OutputDebugStringA(Buffer);
+				
+				LastCounter = EndCounter;
 			}
 		}
 	} else {
