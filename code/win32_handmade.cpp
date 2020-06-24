@@ -5,10 +5,6 @@
 #include <dsound.h>
 #include <math.h>
 
-#define internal static;
-#define local_persist static;
-#define global_variable static;
-#define Pi32 3.14159265359f
 
 typedef uint8_t uint8;
 typedef uint16_t uint16;
@@ -21,6 +17,13 @@ typedef int64_t int64;
 typedef int32 bool32;
 typedef float real32;
 typedef double real64;
+
+#define internal static
+#define local_persist static
+#define global_variable static
+#define Pi32 3.14159265359f
+
+#include "handmade.cpp"
 
 struct win32_offscreen_buffer {
 	BITMAPINFO Info;
@@ -44,7 +47,7 @@ struct win32_sound_output {
 	int WavePeriod;			
 	int BufferSize;
 	int16 ToneVolume;
-}
+};
 
 global_variable bool Running;
 global_variable win32_offscreen_buffer BackBuffer;
@@ -393,6 +396,13 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 					}
 				}
 
+				game_offscreen_buffer Buffer = {};
+				Buffer.Memory = BackBuffer.Memory;
+				Buffer.Width = BackBuffer.Width;
+				Buffer.Height = BackBuffer.Height;
+				Buffer.Pitch = BackBuffer.Pitch;
+
+				GameUpdateAndRender(&Buffer);
 				Win32DrawGradient(&BackBuffer, xOffset, yOffset);
 				DWORD PlayCursor;
 				DWORD WriteCursor;
@@ -430,9 +440,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				LastCycleCount = EndCycleCount;
 				real32 MegaCyclesPerFrame = ((real32)CyclesElapsed / (1000.0f * 1000.0f));
 
-				char Buffer[256];
-				sprintf(Buffer, "MS Per Frame: %f FPS: %f Cycles: %f\n", MsPerFrame, FPS, MegaCyclesPerFrame);
-				OutputDebugStringA(Buffer);
+
+				// char Buffer[256];
+				// sprintf(Buffer, "MS Per Frame: %f FPS: %f Cycles: %f\n", MsPerFrame, FPS, MegaCyclesPerFrame);
+				// OutputDebugStringA(Buffer);
 			}
 		}
 	} else {
