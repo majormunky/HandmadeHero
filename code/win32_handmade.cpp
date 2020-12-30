@@ -318,9 +318,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 
 			win32_sound_output SoundOutput = {};
 			SoundOutput.SamplesPerSecond = 48000;
-			SoundOutput.Hz = 256;
-			SoundOutput.ToneVolume = 3000;
-			SoundOutput.WavePeriod = SoundOutput.SamplesPerSecond / SoundOutput.Hz;
 			SoundOutput.BytesPerSample = sizeof(int16) * 2;
 			SoundOutput.BufferSize = SoundOutput.SamplesPerSecond * SoundOutput.BytesPerSample;
 			SoundOutput.LatencySampleCount = SoundOutput.SamplesPerSecond / 15;
@@ -366,12 +363,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 						bool BtnY = (Pad->wButtons & XINPUT_GAMEPAD_Y);
 						int16 StickX = Pad->sThumbLX;
 						int16 StickY = Pad->sThumbLY;
-
-						xOffset += StickX / 4096;
-						yOffset += StickY / 4096;
-
-						SoundOutput.Hz = 512 + (int)(256.0f * ((real32)StickY / 30000.0f));
-						SoundOutput.WavePeriod = SoundOutput.SamplesPerSecond / SoundOutput.Hz;
 					} else {
 						// no controller here
 					}
@@ -408,7 +399,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR LpCmdLi
 				Buffer.Height = BackBuffer.Height;
 				Buffer.Pitch = BackBuffer.Pitch;
 
-				GameUpdateAndRender(&Buffer, xOffset, yOffset, &SoundBuffer, SoundOutput.Hz);
+				GameUpdateAndRender(&Buffer, &SoundBuffer);
 
 				if (SoundIsValid) {
 					Win32FillSoundBuffer(&SoundOutput, ByteToLock, BytesToWrite, &SoundBuffer);

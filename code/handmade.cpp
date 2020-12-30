@@ -33,7 +33,11 @@ internal void GameOutputSound(game_sound_output_buffer *SoundBuffer, int hz) {
 }
 
 
-internal void GameUpdateAndRender(game_offscreen_buffer *Buffer, int xOffset, int yOffset, game_sound_output_buffer *SoundBuffer, int hz) {
+internal void GameUpdateAndRender(game_offscreen_buffer *Buffer, game_sound_output_buffer *SoundBuffer) {
+	local_persist int xOffset = 0;
+	local_persist int yOffset = 0;
+	local_persist int hz = 256;
+
 	GameOutputSound(SoundBuffer, hz);
 	RenderGradient(Buffer, xOffset, yOffset);
 }
