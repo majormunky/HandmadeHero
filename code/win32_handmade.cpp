@@ -24,31 +24,8 @@ typedef double real64;
 #define Pi32 3.14159265359f
 
 #include "handmade.cpp"
+#include "win32_handmade.h"
 
-struct win32_offscreen_buffer {
-	BITMAPINFO Info;
-	void *Memory;
-	int Width;
-	int Height;
-	int Pitch;
-	int BytesPerPixel;
-};
-
-struct win32_window_size {
-	int Width;
-	int Height;
-};
-
-struct win32_sound_output {
-	int SamplesPerSecond;
-	int Hz;
-	uint32 RunningSampleIndex;
-	int BytesPerSample;
-	int WavePeriod;			
-	int BufferSize;
-	int16 ToneVolume;
-	int LatencySampleCount;
-};
 
 global_variable bool Running;
 global_variable win32_offscreen_buffer BackBuffer;
